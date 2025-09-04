@@ -1,0 +1,5 @@
+# Ignore environment files and sensitive data
+.env
+
+# Ignore IDE specific files
+bellatrixy-star.json
