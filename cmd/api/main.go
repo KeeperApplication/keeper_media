@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/cors"
 	"keeper.media/internal/config"
 	"keeper.media/internal/handler"
@@ -29,13 +31,13 @@ func main() {
 	uploadHandler := handler.NewUploadHandler(gcsService, logger)
 	mediaHandler := handler.NewMediaHandler(gcsService, logger)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("OK"))
-	})
-	mux.HandleFunc("/api/uploads/presigned-url", uploadHandler.GeneratePresignedURL)
-	mux.HandleFunc("/media/", mediaHandler.ServeMedia)
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{cfg.FrontEndURL},
@@ -43,11 +45,20 @@ func main() {
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	})
-	handler := c.Handler(mux)
+	r.Use(c.Handler)
+
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("OK"))
+	})
+
+	r.Post("/api/uploads/presigned-url", uploadHandler.GeneratePresignedURL)
+
+	r.Mount("/media", http.StripPrefix("/media", http.HandlerFunc(mediaHandler.ServeMedia)))
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      handler,
+		Handler:      r,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,

@@ -23,7 +23,7 @@ func NewMediaHandler(gcs *service.GcsService, logger *slog.Logger) *MediaHandler
 }
 
 func (h *MediaHandler) ServeMedia(w http.ResponseWriter, r *http.Request) {
-	objectName := strings.TrimPrefix(r.URL.Path, "/media/")
+	objectName := strings.TrimPrefix(r.URL.Path, "/")
 
 	ctx := r.Context()
 	reader, err := h.gcsService.ReadObject(ctx, objectName)
