@@ -15,6 +15,7 @@ import (
 	"github.com/rs/cors"
 	"keeper.media/internal/config"
 	"keeper.media/internal/handler"
+	appMiddleware "keeper.media/internal/middleware"
 	"keeper.media/internal/service"
 )
 
@@ -47,12 +48,17 @@ func main() {
 	})
 	r.Use(c.Handler)
 
+	authMiddleware := appMiddleware.AuthMiddleware(cfg.JWTSecret, logger)
+
+	r.Route("/api", func(r chi.Router) {
+		r.Use(authMiddleware)
+		r.Post("/uploads/presigned-url", uploadHandler.GeneratePresignedURL)
+	})
+
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte("OK"))
 	})
-
-	r.Post("/api/uploads/presigned-url", uploadHandler.GeneratePresignedURL)
 
 	r.Mount("/media", http.StripPrefix("/media", http.HandlerFunc(mediaHandler.ServeMedia)))
 
