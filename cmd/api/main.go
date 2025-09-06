@@ -48,7 +48,7 @@ func main() {
 	})
 	r.Use(c.Handler)
 
-	authMiddleware := appMiddleware.AuthMiddleware(cfg.JWTSecret, logger)
+	authMiddleware := appMiddleware.AuthMiddleware(cfg.JWTPublicKey, logger)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(authMiddleware)

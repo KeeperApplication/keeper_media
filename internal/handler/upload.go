@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"keeper.media/internal/middleware"
 	"keeper.media/internal/service"
 	"keeper.media/internal/util"
 )
@@ -21,10 +22,6 @@ func NewUploadHandler(gcs *service.GcsService, logger *slog.Logger) *UploadHandl
 		logger:     logger,
 	}
 }
-
-type contextKey string
-
-const userContextKey = contextKey("username")
 
 type PresignedURLRequest struct {
 	FileName    string `json:"fileName"`
@@ -48,7 +45,7 @@ func (h *UploadHandler) GeneratePresignedURL(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	username, ok := r.Context().Value(userContextKey).(string)
+	username, ok := r.Context().Value(middleware.UserContextKey).(string)
 	if !ok {
 		h.logger.Error("Failed to retrieve username from request context after authentication")
 		util.WriteJSONError(w, http.StatusInternalServerError, "Internal server error reading user identity", h.logger)

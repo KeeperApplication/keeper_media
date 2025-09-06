@@ -13,7 +13,7 @@ type Config struct {
 	GCSBucketName     string
 	GCSServiceAccount string
 	FrontEndURL       string
-	JWTSecret         string
+	JWTPublicKey      string
 }
 
 func Load() *Config {
@@ -30,7 +30,7 @@ func Load() *Config {
 		GCSBucketName:     getEnv("GCS_BUCKET_NAME", ""),
 		GCSServiceAccount: getEnv("GCS_SERVICE_ACCOUNT_FILE", ""),
 		FrontEndURL:       getEnv("FRONT_END_URL", "http://localhost:5173"),
-		JWTSecret:         getEnv("JWT_SECRET", ""),
+		JWTPublicKey:      getEnv("JWT_PUBLIC_KEY", ""),
 	}
 }
 
